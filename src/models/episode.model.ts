@@ -10,6 +10,7 @@ export interface EpisodeInstance extends mongoose.Document {
     runTime: number;
     summary: string;
     image: string;
+    file: string;
 }
 
 export type EpisodeModel = mongoose.Model<EpisodeInstance>;
@@ -21,7 +22,8 @@ let EpisodeSchema = {
     date: Date,
     runTime: Number,
     summary: String,
-    image: String
+    image: String,
+    file: String
 };
 
 @injectable()

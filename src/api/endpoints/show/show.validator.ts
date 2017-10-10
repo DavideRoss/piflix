@@ -107,4 +107,9 @@ export class ShowValidator {
         // TODO: compile validation
         next();
     }
+
+    rebuildPaths(req, res, next) {
+        // TODO: compile validation
+        next();
+    }
 }

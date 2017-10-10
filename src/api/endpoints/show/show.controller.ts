@@ -4,6 +4,7 @@ import * as request from 'request-promise-native';
 import * as _ from 'lodash';
 import * as sim from 'string-similarity';
 import * as mongoose from 'mongoose';
+import * as path from 'path';
 
 import { Db } from 'core/db';
 import { Configuration } from 'core/config';
@@ -13,7 +14,10 @@ import * as fs from 'utils/promise-fs';
 import { RequestSessionHandler } from 'api/request-session-handler';
 
 import { ApiShowInstance, ApiShowFactory } from 'models/external/show.model';
+
 import { ShowInstance } from 'models/show.model';
+import { SeasonInstance } from 'models/season.model';
+import { EpisodeInstance } from 'models/episode.model';
 
 @injectable()
 export class ShowController {
@@ -26,6 +30,7 @@ export class ShowController {
     }
 
     async searchRemote(req: RequestSessionHandler, res) {
+        // TODO: move base API path to config file
         let obj = await request.get('http://api.tvmaze.com/singlesearch/shows?q=' + encodeURIComponent(req.query.q));
         res.send(this._apiShowFactory.parse(obj));
     }
@@ -39,7 +44,7 @@ export class ShowController {
         let seasonIds = await Promise.all(Object.keys(seasons).map(async k => {
             let list = seasons[k];
 
-            let episodes = await Promise.all(list.map(async e => {
+            let episodes = await Promise.all(list.map(async (e: any) => {
                 let newEpisode = new this._db.models.Episode({
                     remoteId: e.id,
                     name: e.name,
@@ -149,7 +154,7 @@ export class ShowController {
             out.push({
                 id: episode._id.toString(),
                 number: episode.number,
-                folder: files.find(e => epRegex.test(e))
+                file: files.find(e => epRegex.test(e))
             });
         });
 
@@ -164,6 +169,129 @@ export class ShowController {
     }
 
     async matchEpisodes(req, res) {
-        
+        let season = await this._db.models.Season.findById(new mongoose.Types.ObjectId(req.params.season)).populate('episodes');
+
+        // TODO: handle missing season
+
+        req.body.matches.forEach(async match => {
+            let ep = season.episodes.find(e => e._id.toString() === match.episode);
+
+            // TODO: handle missing episode
+
+            ep.file = match.file;
+            await ep.save();
+        });
+
+        res.send({
+            status: 'ok'
+        });
+    }
+
+    async rebuildPaths(req, res) {
+        let show = await this._db.models.Show.findById(new mongoose.Types.ObjectId(req.params.show)).populate({
+            path: 'seasons',
+            populate: {
+                path: 'episodes',
+                model: 'Episode'
+            }
+        });
+
+        // TODO: handle missing show
+
+        let out = [];
+        let templatePath = req.body.template.split(path.sep);
+
+        if (templatePath.length !== 3) {
+            // TODO: handle missing folder error, format has to be show/season/episode
+            return res.status(400).send({
+                path: templatePath
+            });
+        }
+
+        await Promise.all(show.seasons.map(async season => {
+            if (!season.folder) return;
+
+            await Promise.all(season.episodes.map(async episode => {
+                if (!episode.file) return;
+
+                let oldPath = path.join(
+                    this._config.files.base,
+                    show.folder,
+                    season.folder,
+                    episode.file
+                );
+
+                let newPath = this.parseTemplate(req.body.template, show, season, episode);
+
+                newPath = path.join(
+                    this._config.files.base,
+                    newPath + path.extname(oldPath)
+                );
+
+                let dirs = newPath.split(path.sep).slice(-3, -1);
+                await fs.mkdirp(path.join.apply(null, [this._config.files.base, ...dirs]));
+                await fs.rename(oldPath, newPath);
+
+                out.push({
+                    old: oldPath,
+                    new: newPath.split(path.sep).slice(-templatePath.length)
+                });
+            }));
+        }));
+
+        let newShowFolder = this.parseTemplate(templatePath[0], show);
+
+        if (newShowFolder !== show.folder) {
+            await fs.rimraf(path.join(this._config.files.base, show.folder));
+            show.folder = newShowFolder;
+            await show.save();
+        } else {
+            await Promise.all(show.seasons.map(async season => {
+                if (!season.folder) return;
+                let newSeasonFolder = this.parseTemplate(templatePath[1], show, season);
+
+                if (newSeasonFolder !== season.folder) {
+                    await fs.rimraf(path.join(this._config.files.base, show.folder, season.folder));
+                    season.folder = newSeasonFolder;
+                    await season.save();
+                }
+            }));
+        }
+
+        res.send(out);
+    }
+
+    /*
+
+        PATH MODEL DOCS:
+                                                DONE
+        {H} show name                            OK
+        {s} season number                        OK
+        {S} season number, zero-padded           OK
+        {e} episode number                       OK
+        {E} episode number, zero-padded          OK
+        {n} episode name                         OK
+
+        Characters to be escaped: / \ .
+
+    */
+    // TODO: move to external file
+    parseTemplate(template: string, show: ShowInstance, season?: SeasonInstance, episode?: EpisodeInstance): string {
+        let tmp = template.replace(/\{H\}/gm, show.name);
+
+        if (season) {
+            tmp = tmp
+                .replace(/\{s\}/gm, season.number.toString())
+                .replace(/\{S\}/gm, _.padStart(season.number.toString(), 2, '0'));
+        }
+
+        if (episode) {
+            tmp = tmp
+                .replace(/\{e\}/gm, episode.number.toString())
+                .replace(/\{E\}/gm, _.padStart(episode.number.toString(), 2, '0'))
+                .replace(/\{n\}/gm, episode.name);
+        }
+
+        return tmp;
     }
 }

@@ -19,5 +19,6 @@ export class ShowRoute {
         router.post('/show/:show/detect-seasons', this._showValidator.detectSeasons, this._showController.detectSeasons.bind(this._showController));
         router.post('/show/:show/season/:season/detect-files', this._showValidator.detectFiles, this._showController.detectFiles.bind(this._showController));
         router.post('/show/:show/season/:season/match', this._showValidator.matchEpisodes, this._showController.matchEpisodes.bind(this._showController));
+        router.post('/show/:show/rebuild', this._showValidator.rebuildPaths, this._showController.rebuildPaths.bind(this._showController));
     }
 }
