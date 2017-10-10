@@ -1,0 +1,11 @@
+{
+    "name": "Premium Chess Social API",
+    "version": "1.0.0",
+    "description": "Premium Chess Social API",
+    "title": "Premium Chess Social API",
+    "url" : "{{url}}",
+    "header": {
+        "title": "Codici errore",
+        "filename": "src/docs/header.md"
+    }
+}

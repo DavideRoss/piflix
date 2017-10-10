@@ -1,0 +1,17 @@
+{
+    "compileOnSave": false,
+    "compilerOptions": {
+        "target": "es6",
+        "module": "commonjs",
+        "sourceMap": true,
+        "typeRoots": ["./typings/modules", "./typings/globals"],
+        "types": ["reflect-metadata"],
+        "moduleResolution": "node",
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "baseUrl": "./src"
+    },
+    "include":[
+        "src/**/*"
+    ]
+}
