@@ -15,9 +15,13 @@ import { RequestSessionHandler } from 'api/request-session-handler';
 
 import { ApiShowInstance, ApiShowFactory } from 'models/external/show.model';
 
-import { ShowInstance } from 'models/show.model';
-import { SeasonInstance } from 'models/season.model';
-import { EpisodeInstance } from 'models/episode.model';
+import { IShow, IShowModel } from 'interfaces/show.interface';
+import { ISeason, ISeasonModel } from 'interfaces/season.interface';
+import { IEpisode, IEpisodeModel } from 'interfaces/episode.interface';
+
+import { Show } from 'models/show.model';
+import { Season } from 'models/season.model';
+import { Episode } from 'models/episode.model';
 
 @injectable()
 export class ShowController {
@@ -45,7 +49,7 @@ export class ShowController {
             let list = seasons[k];
 
             let episodes = await Promise.all(list.map(async (e: any) => {
-                let newEpisode = new this._db.models.Episode({
+                let newEpisode = new Episode({
                     remoteId: e.id,
                     name: e.name,
                     number: e.number,
@@ -60,7 +64,7 @@ export class ShowController {
             }));
 
             let seasonObj = obj._embedded.seasons.find(e => e.number = k);
-            let newSeason = new this._db.models.Season({
+            let newSeason = new Season({
                 remoteId: seasonObj.id,
                 name: seasonObj.name,
                 number: seasonObj.number,
@@ -74,7 +78,7 @@ export class ShowController {
             return newSeason._id;
         }));
 
-        let newShow = new this._db.models.Show({
+        let newShow = new Show({
             remoteId: obj.id,
             name: obj.name,
             image: obj.image.original, // TODO: download.image
@@ -95,7 +99,7 @@ export class ShowController {
         // TODO: refactor folder => show
         // TODO: exclude system folders (multiplatform)
 
-        let show = await this._db.models.Show.findById(new mongoose.Types.ObjectId(req.params.id));
+        let show = await Show.findById(new mongoose.Types.ObjectId(req.params.id));
 
         let dirs = await fs.readdir(this._config.files.base);
         let match = sim.findBestMatch(show.name, dirs);
@@ -107,7 +111,7 @@ export class ShowController {
     }
 
     async detectSeasons(req, res) {
-        let show = await this._db.models.Show.findById(new mongoose.Types.ObjectId(req.params.show)).populate('seasons');
+        let show = await Show.findById(new mongoose.Types.ObjectId(req.params.show)).populate('seasons');
         let dirs = await fs.readdir(this._config.files.base + '/' + req.body.folder);
 
         let out = [];
@@ -120,7 +124,7 @@ export class ShowController {
             // TODO: remove duplicate folders
 
             out.push({
-                id: season._id.toString(),
+                id: (season as ISeasonModel)._id.toString(),
                 number: season.number,
                 folder: dirs.find(e => seasonRegex.test(e))
             });
@@ -137,8 +141,8 @@ export class ShowController {
     }
 
     async detectFiles(req, res) {
-        let show = await this._db.models.Show.findById(new mongoose.Types.ObjectId(req.params.show));
-        let season = await this._db.models.Season.findById(new mongoose.Types.ObjectId(req.params.season)).populate('episodes');
+        let show = await Show.findById(new mongoose.Types.ObjectId(req.params.show));
+        let season = await Season.findById(new mongoose.Types.ObjectId(req.params.season)).populate('episodes');
 
         // TODO: handle missing show
         // TODO: handle missing season
@@ -152,7 +156,7 @@ export class ShowController {
             // TODO: remove duplicate files
 
             out.push({
-                id: episode._id.toString(),
+                id: (episode as IEpisodeModel)._id.toString(),
                 number: episode.number,
                 file: files.find(e => epRegex.test(e))
             });
@@ -169,12 +173,12 @@ export class ShowController {
     }
 
     async matchEpisodes(req, res) {
-        let season = await this._db.models.Season.findById(new mongoose.Types.ObjectId(req.params.season)).populate('episodes');
+        let season = await Season.findById(new mongoose.Types.ObjectId(req.params.season)).populate('episodes');
 
         // TODO: handle missing season
 
         req.body.matches.forEach(async match => {
-            let ep = season.episodes.find(e => e._id.toString() === match.episode);
+            let ep = season.episodes.find(e => (e as IEpisodeModel)._id.toString() === match.episode) as IEpisodeModel;
 
             // TODO: handle missing episode
 
@@ -188,7 +192,7 @@ export class ShowController {
     }
 
     async rebuildPaths(req, res) {
-        let show = await this._db.models.Show.findById(new mongoose.Types.ObjectId(req.params.show)).populate({
+        let show = await Show.findById(new mongoose.Types.ObjectId(req.params.show)).populate({
             path: 'seasons',
             populate: {
                 path: 'episodes',
@@ -246,14 +250,14 @@ export class ShowController {
             show.folder = newShowFolder;
             await show.save();
         } else {
-            await Promise.all(show.seasons.map(async season => {
+            await Promise.all(show.seasons.map(async (season) => {
                 if (!season.folder) return;
                 let newSeasonFolder = this.parseTemplate(templatePath[1], show, season);
 
                 if (newSeasonFolder !== season.folder) {
                     await fs.rimraf(path.join(this._config.files.base, show.folder, season.folder));
                     season.folder = newSeasonFolder;
-                    await season.save();
+                    await (season as ISeasonModel).save();
                 }
             }));
         }
@@ -276,7 +280,7 @@ export class ShowController {
 
     */
     // TODO: move to external file
-    parseTemplate(template: string, show: ShowInstance, season?: SeasonInstance, episode?: EpisodeInstance): string {
+    parseTemplate(template: string, show: IShow, season?: ISeason, episode?: IEpisode): string {
         let tmp = template.replace(/\{H\}/gm, show.name);
 
         if (season) {

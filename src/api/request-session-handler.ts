@@ -1,6 +1,6 @@
 import { Request } from 'express';
-import { UserInstance } from 'models/user.model';
+import { IUserModel } from 'interfaces/user.interface';
 
 export interface RequestSessionHandler extends Request {
-    user?: UserInstance;
+    user?: IUserModel;
 }

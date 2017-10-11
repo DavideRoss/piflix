@@ -1,10 +1,9 @@
 import * as mongoose from 'mongoose';
 
-import { SeasonInstance } from 'models/season.model';
+import { IShow, IShowModel } from 'interfaces/show.interface';
+import { ISeason } from 'interfaces/season.interface';
 
-import { injectable } from 'inversify';
-
-export interface ShowInstance extends mongoose.Document {
+export class ShowSchema extends mongoose.Schema implements IShow {
     remoteId: number;
     name: string;
     image: string;
@@ -12,36 +11,23 @@ export interface ShowInstance extends mongoose.Document {
 
     folder: string;
 
-    seasons: SeasonInstance[];
-}
-
-export type ShowModel = mongoose.Model<ShowInstance>;
-
-let ShowSchema = {
-    remoteId: Number,
-    name: String,
-    image: String,
-    officialSite: String,
-
-    folder: String,
-
-    seasons: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Season'
-    }]
-};
-
-@injectable()
-export class ShowFactory {
-    attribute: ShowFactory;
-    model: ShowModel;
+    seasons: ISeason[];
 
     constructor() {
-        if (mongoose.modelNames().indexOf('Show') !== -1) {
-            this.model = mongoose.model<ShowInstance>('Show');
-        } else {
-            let schema = new mongoose.Schema(ShowSchema);
-            this.model = mongoose.model<ShowInstance>('Show', schema);
-        }
+        super({
+            remoteId: Number,
+            name: String,
+            image: String,
+            officialSite: String,
+
+            folder: String,
+
+            seasons: [{
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Season'
+            }]
+        });
     }
 }
+
+export const Show = mongoose.model<IShowModel>('Show', new ShowSchema());

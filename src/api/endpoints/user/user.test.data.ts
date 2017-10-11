@@ -1,7 +1,7 @@
 import { hashPassword } from 'utils/crypt';
 import * as mongodb from 'mongodb';
 
-import { TokenLevel } from 'models/token.model';
+import { TokenLevel } from 'interfaces/token.interface';
 
 let ObjectId = mongodb.ObjectID;
 

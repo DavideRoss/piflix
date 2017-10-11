@@ -9,12 +9,6 @@ import { Policy } from 'core/policy';
 import { AuthService } from 'services/auth.service';
 import { ResponseService } from 'services/response.service';
 
-import { UserFactory } from 'models/user.model';
-import { TokenFactory } from 'models/token.model';
-import { ShowFactory } from 'models/show.model';
-import { SeasonFactory } from 'models/season.model';
-import { EpisodeFactory } from 'models/episode.model';
-
 import { ApiShowFactory } from 'models/external/show.model';
 
 import { UserRoute } from 'api/endpoints/user/user.route';
@@ -40,12 +34,6 @@ InversifyContainer.bind<Policy>(Policy).toSelf();
 
 InversifyContainer.bind<AuthService>(AuthService).toSelf();
 InversifyContainer.bind<ResponseService>(ResponseService).toSelf();
-
-InversifyContainer.bind<UserFactory>(UserFactory).toSelf();
-InversifyContainer.bind<TokenFactory>(TokenFactory).toSelf();
-InversifyContainer.bind<ShowFactory>(ShowFactory).toSelf();
-InversifyContainer.bind<SeasonFactory>(SeasonFactory).toSelf();
-InversifyContainer.bind<EpisodeFactory>(EpisodeFactory).toSelf();
 
 InversifyContainer.bind<ApiShowFactory>(ApiShowFactory).toSelf();
 

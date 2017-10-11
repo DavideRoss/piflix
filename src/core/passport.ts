@@ -9,8 +9,11 @@ import { ApiError, ErrorCode } from 'core/error-codes';
 
 import { AuthService } from 'services/auth.service';
 
-import { TokenLevel } from 'models/token.model';
-import { UserInstance } from 'models/user.model';
+import { IUser } from 'interfaces/user.interface';
+import { TokenLevel } from 'interfaces/token.interface';
+
+import { User } from 'models/user.model';
+import { Token } from 'models/token.model';
 
 import * as passport from 'passport';
 import * as bcrypt from 'bcrypt';
@@ -29,7 +32,7 @@ export class PassportConfiguration {
         });
 
         passport.deserializeUser((id, done) => {
-            this._db.models.User.findOne({
+            User.findOne({
                 id: id
             }).exec(done);
         });
@@ -43,7 +46,7 @@ export class PassportConfiguration {
             }
 
             try {
-                let user = await this._db.models.User.findOne({
+                let user = await User.findOne({
                     mail: mail
                 });
 
@@ -70,7 +73,7 @@ export class PassportConfiguration {
         }));
 
         passport.use(new BearerStrategy(async (accessToken, done) => {
-            let token = await this._db.models.Token.findOne({
+            let token = await Token.findOne({
                 value: accessToken,
                 expireAt: {
                     $gt: new Date()
@@ -82,7 +85,7 @@ export class PassportConfiguration {
                 return done(null, false);
             }
 
-            let user = <UserInstance>token.user;
+            let user = <IUser>token.user;
             user.token = token.value;
 
             done(null, user);

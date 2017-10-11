@@ -1,42 +1,30 @@
 import * as mongoose from 'mongoose';
 
-import { injectable } from 'inversify';
+import { IEpisode, IEpisodeModel } from 'interfaces/episode.interface';
 
-export interface EpisodeInstance extends mongoose.Document {
-    remoteId: number;
-    name: string;
-    number: number;
-    date: Date;
-    runTime: number;
-    summary: string;
-    image: string;
-    file: string;
-}
-
-export type EpisodeModel = mongoose.Model<EpisodeInstance>;
-
-let EpisodeSchema = {
-    remoteId: Number,
-    name: String,
-    number: Number,
-    date: Date,
-    runTime: Number,
-    summary: String,
-    image: String,
-    file: String
-};
-
-@injectable()
-export class EpisodeFactory {
-    attribute: EpisodeFactory;
-    model: EpisodeModel;
+export class EpisodeSchema extends mongoose.Schema implements IEpisode {
+    public remoteId: number;
+    public name: string;
+    public number: number;
+    public date: Date;
+    public runTime: number;
+    public summary: string;
+    public image: string;
+    public file: string;
 
     constructor() {
-        if (mongoose.modelNames().indexOf('Episode') !== -1) {
-            this.model = mongoose.model<EpisodeInstance>('Episode');
-        } else {
-            let schema = new mongoose.Schema(EpisodeSchema);
-            this.model = mongoose.model<EpisodeInstance>('Episode', schema);
-        }
+        super({
+            remoteId: Number,
+            name: String,
+            number: Number,
+            date: Date,
+            runTime: Number,
+            summary: String,
+            image: String,
+
+            file: String
+        });
     }
 }
+
+export const Episode = mongoose.model<IEpisodeModel>('Episode', new EpisodeSchema());
