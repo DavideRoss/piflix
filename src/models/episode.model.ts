@@ -12,7 +12,9 @@ export class EpisodeSchema extends mongoose.Schema implements IEpisode {
     runTime: number;
     summary: string;
     image: string;
+
     file: string;
+    alias: string;
 
     show: IShow;
     season: ISeason;
@@ -28,6 +30,7 @@ export class EpisodeSchema extends mongoose.Schema implements IEpisode {
             image: String,
 
             file: String,
+            alias: String,
 
             show: {
                 type: mongoose.Schema.Types.ObjectId,

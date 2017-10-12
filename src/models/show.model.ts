@@ -11,6 +11,7 @@ export class ShowSchema extends mongoose.Schema implements IShow {
     officialSite: string;
 
     folder: string;
+    alias: string;
 
     seasons: ISeason[];
     episodes: IEpisode[];
@@ -23,6 +24,7 @@ export class ShowSchema extends mongoose.Schema implements IShow {
             officialSite: String,
 
             folder: String,
+            alias: String,
 
             seasons: [{
                 type: mongoose.Schema.Types.ObjectId,

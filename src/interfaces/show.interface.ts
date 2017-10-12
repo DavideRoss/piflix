@@ -10,6 +10,7 @@ export interface IShow {
     officialSite: string;
 
     folder: string;
+    alias: string;
 
     seasons: ISeason[];
     episodes: IEpisode[];

@@ -13,6 +13,7 @@ export interface IEpisode {
     image: string;
 
     file: string;
+    alias: string;
 
     show: IShow;
     season: ISeason;

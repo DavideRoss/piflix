@@ -40,29 +40,23 @@ export class ShowController {
     }
 
     async importFromRemote(req: RequestSessionHandler, res) {
+        // TODO: move base API path to config file
         let objStr = await request.get('http://api.tvmaze.com/shows/' + req.params.id + '?embed[]=episodes&embed[]=seasons');
         let obj = JSON.parse(objStr);
 
+        let newShow = new Show({
+            remoteId: obj.id,
+            name: obj.name,
+            image: obj.image.original, // TODO: download.image
+            officialSite: obj.officialSite,
+            alias: _.kebabCase(obj.name),
+            seasons: [],
+            episodes: []
+        });
+
         let seasons = _.groupBy(obj._embedded.episodes, 'season');
 
-        let seasonIds = await Promise.all(Object.keys(seasons).map(async k => {
-            let list = seasons[k];
-
-            let episodes = await Promise.all(list.map(async (e: any) => {
-                let newEpisode = new Episode({
-                    remoteId: e.id,
-                    name: e.name,
-                    number: e.number,
-                    date: new Date(), // TODO: parse date
-                    runTime: 0, // TODO: parse number
-                    summary: e.summary, // TODO: clean HTML tags
-                    image: e.image.original // TODO: download image
-                });
-
-                await newEpisode.save();
-                return newEpisode._id;
-            }));
-
+         await Promise.all(Object.keys(seasons).map(async k => {
             let seasonObj = obj._embedded.seasons.find(e => e.number = k);
             let newSeason = new Season({
                 remoteId: seasonObj.id,
@@ -71,20 +65,39 @@ export class ShowController {
                 image: seasonObj.image.original, // TODO: download image
                 premiere: new Date(), // TODO: parse date
                 end: new Date(), // TODO: parse date
-                episodes
+                episodes: [],
+                alias: _.kebabCase('Season ' + seasonObj.number),
+
+                show: newShow._id
             });
 
-            await newSeason.save();
-            return newSeason._id;
-        }));
+            let list = seasons[k];
 
-        let newShow = new Show({
-            remoteId: obj.id,
-            name: obj.name,
-            image: obj.image.original, // TODO: download.image
-            officialSite: obj.officialSite,
-            seasons: seasonIds
-        });
+            await Promise.all(list.map(async (e: any) => {
+                let newEpisode = new Episode({
+                    remoteId: e.id,
+                    name: e.name,
+                    number: e.number,
+                    date: new Date(), // TODO: parse date
+                    runTime: 0, // TODO: parse number
+                    summary: e.summary, // TODO: clean HTML tags
+                    image: e.image.original, // TODO: download image
+                    alias: _.kebabCase(e.name),
+
+                    show: newShow._id,
+                    season: newSeason._id
+                });
+
+                newSeason.episodes.push(newEpisode._id);
+                newShow.episodes.push(newEpisode._id);
+
+                await newEpisode.save();
+            }));
+
+            newShow.seasons.push(newSeason._id);
+
+            await newSeason.save();
+        }));
 
         await newShow.save();
 

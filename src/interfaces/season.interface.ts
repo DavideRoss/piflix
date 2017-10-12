@@ -13,6 +13,7 @@ export interface ISeason {
     end: Date;
 
     folder: string;
+    alias: string;
 
     show: IShow;
     episodes: IEpisode[];
