@@ -1,5 +1,6 @@
 import * as mongoose from 'mongoose';
 
+import { IShow } from 'interfaces/show.interface';
 import { ISeason, ISeasonModel } from 'interfaces/season.interface';
 import { IEpisode } from 'interfaces/episode.interface';
 
@@ -13,7 +14,9 @@ export class SeasonSchema extends mongoose.Schema implements ISeason {
     end: Date;
 
     folder: string;
+    alias: string;
 
+    show: IShow;
     episodes: IEpisode[];
 
     constructor() {
@@ -27,6 +30,12 @@ export class SeasonSchema extends mongoose.Schema implements ISeason {
             end: Date,
 
             folder: String,
+            alias: String,
+
+            show: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Show'
+            },
 
             episodes: [{
                 type: mongoose.Schema.Types.ObjectId,

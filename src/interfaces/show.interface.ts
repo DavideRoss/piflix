@@ -1,5 +1,7 @@
 import { Document } from 'mongoose';
+
 import { ISeason } from 'interfaces/season.interface';
+import { IEpisode } from 'interfaces/episode.interface';
 
 export interface IShow {
     remoteId: number;
@@ -8,8 +10,10 @@ export interface IShow {
     officialSite: string;
 
     folder: string;
+    alias: string;
 
     seasons: ISeason[];
+    episodes: IEpisode[];
 }
 
 export interface IShowModel extends IShow, Document { }
