@@ -1,4 +1,6 @@
 import { Document } from 'mongoose';
+
+import { IShow } from 'interfaces/show.interface';
 import { IEpisode } from 'interfaces/episode.interface';
 
 export interface ISeason {
@@ -12,6 +14,7 @@ export interface ISeason {
 
     folder: string;
 
+    show: IShow;
     episodes: IEpisode[];
 }
 

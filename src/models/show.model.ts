@@ -2,6 +2,7 @@ import * as mongoose from 'mongoose';
 
 import { IShow, IShowModel } from 'interfaces/show.interface';
 import { ISeason } from 'interfaces/season.interface';
+import { IEpisode } from 'interfaces/episode.interface';
 
 export class ShowSchema extends mongoose.Schema implements IShow {
     remoteId: number;
@@ -12,6 +13,7 @@ export class ShowSchema extends mongoose.Schema implements IShow {
     folder: string;
 
     seasons: ISeason[];
+    episodes: IEpisode[];
 
     constructor() {
         super({
@@ -25,6 +27,11 @@ export class ShowSchema extends mongoose.Schema implements IShow {
             seasons: [{
                 type: mongoose.Schema.Types.ObjectId,
                 ref: 'Season'
+            }],
+
+            episodes: [{
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Episode'
             }]
         });
     }
