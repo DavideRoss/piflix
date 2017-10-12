@@ -8,3 +8,4 @@ export let readdir = promisify(fs.readdir);
 export let rename = promisify(fs.rename);
 export let mkdirp = promisify(mk);
 export let rimraf = promisify(rm);
+export let createWriteStream = fs.createWriteStream;

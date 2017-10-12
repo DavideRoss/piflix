@@ -2,6 +2,7 @@ import { Container } from 'inversify';
 
 import { Configuration } from 'core/config';
 import { Db } from 'core/db';
+import { ImageProvider } from 'core/image';
 import { Logger } from 'core/log';
 import { PassportConfiguration } from 'core/passport';
 import { Policy } from 'core/policy';
@@ -28,6 +29,7 @@ export let InversifyContainer = new Container();
 InversifyContainer.bind<Configuration>(Configuration).toSelf().inSingletonScope();
 InversifyContainer.bind<Db>(Db).toSelf().inSingletonScope();
 InversifyContainer.bind<Logger>(Logger).toSelf().inSingletonScope();
+InversifyContainer.bind<ImageProvider>(ImageProvider).toSelf().inSingletonScope();
 
 InversifyContainer.bind<PassportConfiguration>(PassportConfiguration).toSelf();
 InversifyContainer.bind<Policy>(Policy).toSelf();

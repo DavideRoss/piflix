@@ -6,8 +6,9 @@ import * as sim from 'string-similarity';
 import * as mongoose from 'mongoose';
 import * as path from 'path';
 
-import { Db } from 'core/db';
 import { Configuration } from 'core/config';
+import { Db } from 'core/db';
+import { ImageProvider } from 'core/image';
 
 import * as fs from 'utils/promise-fs';
 
@@ -28,7 +29,8 @@ export class ShowController {
     constructor(
         private _db: Db,
         private _config: Configuration,
-        private _apiShowFactory: ApiShowFactory
+        private _apiShowFactory: ApiShowFactory,
+        private _imageProvider: ImageProvider
     ) {
         this.searchRemote = this.searchRemote.bind(this);
     }
@@ -56,7 +58,7 @@ export class ShowController {
                     date: new Date(), // TODO: parse date
                     runTime: 0, // TODO: parse number
                     summary: e.summary, // TODO: clean HTML tags
-                    image: e.image.original // TODO: download image
+                    image: await this._imageProvider.download(e.image.original)
                 });
 
                 await newEpisode.save();
