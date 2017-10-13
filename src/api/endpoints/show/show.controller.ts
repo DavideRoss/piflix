@@ -49,12 +49,13 @@ export class ShowController {
         let newShow = new Show({
             remoteId: obj.id,
             name: obj.name,
-            image: obj.image.original, // TODO: download.image
             officialSite: obj.officialSite,
             alias: _.kebabCase(obj.name),
             seasons: [],
             episodes: []
         });
+
+        newShow.image = await this._imageProvider.download(obj.image.original, newShow.alias);
 
         let seasons = _.groupBy(obj._embedded.episodes, 'season');
 
@@ -64,7 +65,6 @@ export class ShowController {
                 remoteId: seasonObj.id,
                 name: seasonObj.name,
                 number: seasonObj.number,
-                image: seasonObj.image.original, // TODO: download image
                 premiere: new Date(), // TODO: parse date
                 end: new Date(), // TODO: parse date
                 episodes: [],
@@ -72,6 +72,11 @@ export class ShowController {
 
                 show: newShow._id
             });
+
+            newSeason.image = await this._imageProvider.download(
+                seasonObj.image.original,
+                path.join(newShow.alias, newSeason.alias)
+            );
 
             let list = seasons[k];
 
@@ -83,13 +88,16 @@ export class ShowController {
                     date: new Date(), // TODO: parse date
                     runTime: 0, // TODO: parse number
                     summary: e.summary, // TODO: clean HTML tags
-
-                    image: await this._imageProvider.download(e.image.original),
                     alias: _.kebabCase(e.name),
 
                     show: newShow._id,
                     season: newSeason._id
                 });
+
+                newEpisode.image = await this._imageProvider.download(
+                    e.image.original,
+                    path.join(newShow.alias, newSeason.alias, newEpisode.alias)
+                );
 
                 newSeason.episodes.push(newEpisode._id);
                 newShow.episodes.push(newEpisode._id);
