@@ -66,7 +66,7 @@ export class UserRoute {
          *
          *
          */
-        router.post('/user/logout', this._policy.isAuthenticated, this._userController.logout);
+        router.post('/user/logout', this._userController.logout);
     }
 }
 
