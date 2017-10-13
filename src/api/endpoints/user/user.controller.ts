@@ -36,3 +36,19 @@ export class UserController {
 
     }
 }
+
+// TODO: move to appropriate API call
+// import { User, UserRole } from 'models/user.model';
+// import { hashPassword } from 'utils/crypt';
+
+// (async () => {
+//     let u = new User({
+//         mail: 'davide.ross93@gmail.com',
+//         password: hashPassword('davide12'),
+//         activated: true,
+//         role: UserRole.administrator
+//     });
+
+//     await u.save();
+//     console.log(u);
+// })();

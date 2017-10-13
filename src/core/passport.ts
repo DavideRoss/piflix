@@ -63,7 +63,7 @@ export class PassportConfiguration {
                 }
 
                 let expiration = this._config.token.expiration;
-                let token = await this._authService.createToken(user, expiration, TokenLevel.activation);
+                let token = await this._authService.createToken(user, expiration, TokenLevel.authenticate);
 
                 user.token = token.value;
                 return done(null, user);
