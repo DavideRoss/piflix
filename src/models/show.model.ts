@@ -9,6 +9,7 @@ export class ShowSchema extends mongoose.Schema implements IShow {
     name: string;
     image: string;
     officialSite: string;
+    premiere: Date;
 
     folder: string;
     alias: string;
@@ -22,6 +23,7 @@ export class ShowSchema extends mongoose.Schema implements IShow {
             name: String,
             image: String,
             officialSite: String,
+            premiere: Date,
 
             folder: String,
             alias: String,

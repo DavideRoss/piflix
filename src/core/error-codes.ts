@@ -1,6 +1,5 @@
 export enum ErrorCode {
     unauthorized,
-    user_not_activated,
     user_not_found,
     user_invalid_password,
     user_already_present,
@@ -8,7 +7,13 @@ export enum ErrorCode {
     missing_mail_or_password,
     invalid_email,
     missing_email,
-    missing_password
+    missing_password,
+    missing_external_api_connectivity,
+
+    missing_show,
+    missing_season,
+    missing_episode,
+    wrong_path_template
 }
 
 export interface ErrorCodeObject {
@@ -43,11 +48,6 @@ let errorsMap: Map<ErrorCode, ErrorCodeObject> = new Map<ErrorCode, ErrorCodeObj
 // 1999: field validation errors
 
 let errors: ErrorCodeObject[] = [{
-    code: 1002,
-    label: ErrorCode.user_not_activated,
-    message: 'User not activated',
-    status: 401
-}, {
     code: 1003,
     label: ErrorCode.user_not_found,
     message: 'User not found',
@@ -61,6 +61,31 @@ let errors: ErrorCodeObject[] = [{
     code: 1101,
     label: ErrorCode.missing_mail_or_password,
     message: 'Missing mail or password',
+    status: 400
+}, {
+    code: 1000,
+    label: ErrorCode.missing_external_api_connectivity,
+    message: 'Missing external API connectivity',
+    status: 400
+}, {
+    code: 1201,
+    label: ErrorCode.missing_show,
+    message: 'Missing show',
+    status: 400
+}, {
+    code: 1202,
+    label: ErrorCode.missing_season,
+    message: 'Missing season',
+    status: 400
+}, {
+    code: 1203,
+    label: ErrorCode.missing_episode,
+    message: 'Missing episode',
+    status: 400
+}, {
+    code: 1204,
+    label: ErrorCode.wrong_path_template,
+    message: 'Wrong path template',
     status: 400
 }];
 

@@ -1,4 +1,5 @@
 import * as _ from 'lodash';
+import { checkExist } from 'utils/promise-fs';
 import { resolve } from 'path';
 
 import { injectable } from 'inversify';
@@ -41,6 +42,11 @@ let defaultConf = {
 
     files: {
         base: resolve(__dirname + '/../../../files')
+    },
+
+    remote: {
+        provider: 'tvmaze',
+        api: 'http://api.tvmaze.com'
     }
 };
 
@@ -82,13 +88,23 @@ export class Configuration {
     };
 
     files: {
-        base: string
+        base: string;
+    };
+
+    external: {
+        provider: string;
+        api: string
     };
 
     constructor() {
         this.setConfiguration();
 
         // TODO: load configuration from env/cmd line arguments
+
+        // Check files.base folder existence
+        checkExist(this.files.base).catch(() => {
+            throw Error('Missing local file folder');
+        });
     }
 
     setConfiguration(conf: Object = {}) {

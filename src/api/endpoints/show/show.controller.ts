@@ -5,10 +5,14 @@ import * as _ from 'lodash';
 import * as sim from 'string-similarity';
 import * as mongoose from 'mongoose';
 import * as path from 'path';
+import * as moment from 'moment';
+import * as striptags from 'striptags';
+import * as junk from 'junk';
 
 import { Configuration } from 'core/config';
 import { Db } from 'core/db';
 import { ImageProvider } from 'core/image';
+import { ApiError, ErrorCode } from 'core/error-codes';
 
 import * as fs from 'utils/promise-fs';
 
@@ -36,14 +40,12 @@ export class ShowController {
     }
 
     async searchRemote(req: RequestSessionHandler, res) {
-        // TODO: move base API path to config file
-        let obj = await request.get('http://api.tvmaze.com/singlesearch/shows?q=' + encodeURIComponent(req.query.q));
+        let obj = await request.get(this._config.external.api + '/singlesearch/shows?q=' + encodeURIComponent(req.query.q));
         res.send(this._apiShowFactory.parse(obj));
     }
 
     async importFromRemote(req: RequestSessionHandler, res) {
-        // TODO: move base API path to config file
-        let objStr = await request.get('http://api.tvmaze.com/shows/' + req.params.id + '?embed[]=episodes&embed[]=seasons');
+        let objStr = await request.get(this._config.external.api + '/shows/' + req.params.id + '?embed[]=episodes&embed[]=seasons');
         let obj = JSON.parse(objStr);
 
         let newShow = new Show({
@@ -51,6 +53,7 @@ export class ShowController {
             name: obj.name,
             officialSite: obj.officialSite,
             alias: _.kebabCase(obj.name),
+            premiere: moment(obj.premiered, 'YYYY-MM-DD').toDate(),
             seasons: [],
             episodes: []
         });
@@ -65,8 +68,8 @@ export class ShowController {
                 remoteId: seasonObj.id,
                 name: seasonObj.name,
                 number: seasonObj.number,
-                premiere: new Date(), // TODO: parse date
-                end: new Date(), // TODO: parse date
+                premiere: moment(seasonObj.premiereDate, 'YYYY-MM-DD').toDate(),
+                end: moment(seasonObj.endDate, 'YYYY-MM-DD').toDate(),
                 episodes: [],
                 alias: _.kebabCase('Season ' + seasonObj.number),
 
@@ -85,9 +88,9 @@ export class ShowController {
                     remoteId: e.id,
                     name: e.name,
                     number: e.number,
-                    date: new Date(), // TODO: parse date
-                    runTime: 0, // TODO: parse number
-                    summary: e.summary, // TODO: clean HTML tags
+                    date: moment(e.airstamp),
+                    runTime: e.runtime,
+                    summary: striptags(e.summary),
                     alias: _.kebabCase(e.name),
 
                     show: newShow._id,
@@ -117,15 +120,14 @@ export class ShowController {
         });
     }
 
-    async detectFolder(req, res) {
-        // TODO: verify base directory existence before run this method (on init?)
-        // TODO: handle missing show (404)
-        // TODO: refactor folder => show
-        // TODO: exclude system folders (multiplatform)
-
+    async detectShow(req, res) {
         let show = await Show.findById(new mongoose.Types.ObjectId(req.params.id));
 
-        let dirs = await fs.readdir(this._config.files.base);
+        if (!show) {
+            throw new ApiError(ErrorCode.missing_show);
+        }
+
+        let dirs = (await fs.readdir(this._config.files.base)).filter(junk.not);
         let match = sim.findBestMatch(show.name, dirs);
 
         res.send({
@@ -140,17 +142,20 @@ export class ShowController {
 
         let out = [];
 
-        // TODO: handle missing show (404)
+        if (!show) {
+            throw new ApiError(ErrorCode.missing_show);
+        }
 
         show.seasons.forEach(season => {
             let seasonRegex = new RegExp(`s(eason)? ?0?${season.number}`, 'i');
 
-            // TODO: remove duplicate folders
+            let found = dirs.find(e => seasonRegex.test(e));
+            dirs.splice(dirs.indexOf(found), 1);
 
             out.push({
                 id: (season as ISeasonModel)._id.toString(),
                 number: season.number,
-                folder: dirs.find(e => seasonRegex.test(e))
+                folder: found
             });
         });
 
@@ -168,8 +173,13 @@ export class ShowController {
         let show = await Show.findById(new mongoose.Types.ObjectId(req.params.show));
         let season = await Season.findById(new mongoose.Types.ObjectId(req.params.season)).populate('episodes');
 
-        // TODO: handle missing show
-        // TODO: handle missing season
+        if (!show) {
+            throw new ApiError(ErrorCode.missing_show);
+        }
+
+        if (!season) {
+            throw new ApiError(ErrorCode.missing_season);
+        }
 
         let files = await fs.readdir(this._config.files.base + '/' + show.folder + '/' + req.body.folder);
         let out = [];
@@ -177,12 +187,13 @@ export class ShowController {
         season.episodes.forEach(episode => {
             let epRegex = new RegExp(`(s|e)?0?${season.number}(x|e)0?${episode.number}`, 'i');
 
-            // TODO: remove duplicate files
+            let found = files.find(e => epRegex.test(e));
+            files.splice(files.indexOf(found), 1);
 
             out.push({
                 id: (episode as IEpisodeModel)._id.toString(),
                 number: episode.number,
-                file: files.find(e => epRegex.test(e))
+                file: found
             });
         });
 
@@ -199,12 +210,16 @@ export class ShowController {
     async matchEpisodes(req, res) {
         let season = await Season.findById(new mongoose.Types.ObjectId(req.params.season)).populate('episodes');
 
-        // TODO: handle missing season
+        if (!season) {
+            throw new ApiError(ErrorCode.missing_season);
+        }
 
         req.body.matches.forEach(async match => {
             let ep = season.episodes.find(e => (e as IEpisodeModel)._id.toString() === match.episode) as IEpisodeModel;
 
-            // TODO: handle missing episode
+            if (!ep) {
+                throw new ApiError(ErrorCode.missing_episode);
+            }
 
             ep.file = match.file;
             await ep.save();
@@ -224,16 +239,15 @@ export class ShowController {
             }
         });
 
-        // TODO: handle missing show
+        if (!show) {
+            throw new ApiError(ErrorCode.missing_show);
+        }
 
         let out = [];
         let templatePath = req.body.template.split(path.sep);
 
         if (templatePath.length !== 3) {
-            // TODO: handle missing folder error, format has to be show/season/episode
-            return res.status(400).send({
-                path: templatePath
-            });
+            throw new ApiError(ErrorCode.wrong_path_template);
         }
 
         await Promise.all(show.seasons.map(async season => {
@@ -303,8 +317,7 @@ export class ShowController {
         Characters to be escaped: / \ .
 
     */
-    // TODO: move to external file
-    parseTemplate(template: string, show: IShow, season?: ISeason, episode?: IEpisode): string {
+    private parseTemplate(template: string, show: IShow, season?: ISeason, episode?: IEpisode): string {
         let tmp = template.replace(/\{H\}/gm, show.name);
 
         if (season) {

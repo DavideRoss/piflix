@@ -9,3 +9,9 @@ export let rename = promisify(fs.rename);
 export let mkdirp = promisify(mk);
 export let rimraf = promisify(rm);
 export let createWriteStream = fs.createWriteStream;
+
+export let checkExist = (path: string) => {
+    return new Promise((resolve, reject) => {
+        fs.existsSync(path) ? resolve() : reject();
+    });
+};

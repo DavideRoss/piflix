@@ -8,6 +8,7 @@ export interface IShow {
     name: string;
     image: string;
     officialSite: string;
+    premiere: Date;
 
     folder: string;
     alias: string;

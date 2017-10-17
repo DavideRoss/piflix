@@ -9,6 +9,7 @@ import { Policy } from 'core/policy';
 
 import { AuthService } from 'services/auth.service';
 import { ResponseService } from 'services/response.service';
+import { ExternalService } from 'services/external.service';
 
 import { ApiShowFactory } from 'models/external/show.model';
 
@@ -36,6 +37,7 @@ InversifyContainer.bind<Policy>(Policy).toSelf();
 
 InversifyContainer.bind<AuthService>(AuthService).toSelf();
 InversifyContainer.bind<ResponseService>(ResponseService).toSelf();
+InversifyContainer.bind<ExternalService>(ExternalService).toSelf();
 
 InversifyContainer.bind<ApiShowFactory>(ApiShowFactory).toSelf();
 

@@ -21,6 +21,8 @@ export class ResponseService {
         let status: number = 500;
         let responseBody: ErrorResponseBody;
 
+        console.log(err);
+
         if (err instanceof ApiError) {
             responseBody = {
                 message: err.errorCodeObject.message,

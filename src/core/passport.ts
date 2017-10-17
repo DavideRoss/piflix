@@ -58,10 +58,6 @@ export class PassportConfiguration {
                     throw new ApiError(ErrorCode.user_invalid_password);
                 }
 
-                if (!user.activated) {
-                    throw new ApiError(ErrorCode.user_not_activated);
-                }
-
                 let expiration = this._config.token.expiration;
                 let token = await this._authService.createToken(user, expiration, TokenLevel.authenticate);
 

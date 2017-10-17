@@ -36,7 +36,7 @@ export class ShowValidator {
         }
     }
 
-    detectFolder(req, res, next) {
+    detectShow(req, res, next) {
         const schema = Joi.object().keys({
             id: Joi.string().required() // TODO: Validate for ObjectID
         });
