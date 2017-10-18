@@ -1,6 +1,9 @@
 {
+    "extends": "tslint:recommended",
     "rules": {
+        "arrow-parens": false,
         "class-name": true,
+        "curly": false,
         "comment-format": [
             true,
             "check-space"
@@ -9,22 +12,46 @@
             true,
             "spaces"
         ],
+        "max-line-length": [
+            true,
+            160
+        ],
+        "member-ordering": [
+            true,
+            {
+              "order": "statics-first"
+            }
+        ],
+        "member-access": false,
+        "no-console": false,
+        "no-consecutive-blank-lines": true,
         "no-duplicate-variable": true,
+        "no-empty": false,
         "no-eval": true,
         "no-internal-module": true,
         "no-trailing-whitespace": true,
         "no-unsafe-finally": true,
         "no-var-keyword": true,
+        "no-var-requires": false,
         "one-line": [
             true,
             "check-open-brace",
             "check-whitespace"
         ],
-        "quotemark": false,
+        "ordered-imports": [true, {
+            "import-sources-order": "case-insensitive",
+            "named-imports-order": "case-insensitive"
+        }],
+        "quotemark": [
+            true,
+            "single",
+            "avoid-escape"
+        ],
         "semicolon": [
             true,
             "always"
         ],
+        "trailing-comma": [true],
         "triple-equals": [
             true,
             "allow-null-check"
@@ -41,7 +68,9 @@
         ],
         "variable-name": [
             true,
-            "ban-keywords"
+            "ban-keywords",
+            "check-format",
+            "allow-leading-underscore"
         ],
         "whitespace": [
             true,

@@ -6,11 +6,11 @@ import * as fixtures from 'pow-mongoose-fixtures';
 import { Configuration } from 'core/config';
 import { Logger } from 'core/log';
 
-import { User } from 'models/user.model';
-import { Token } from 'models/token.model';
-import { Show } from 'models/show.model';
-import { Season } from 'models/season.model';
 import { Episode } from 'models/episode.model';
+import { Season } from 'models/season.model';
+import { Show } from 'models/show.model';
+import { Token } from 'models/token.model';
+import { User } from 'models/user.model';
 
 @injectable()
 export class Db {
@@ -22,12 +22,12 @@ export class Db {
     ) { }
 
     public setup(): Promise<any> {
-        let password = this._config.mongo.password ? `:${this._config.mongo.password}` : '';
-        let auth = (this._config.mongo.user || password) ? this._config.mongo.user + password + '@' : '';
-        let uri = `mongodb://${auth}${this._config.mongo.host}/${this._config.mongo.database}`;
+        const password = this._config.mongo.password ? `:${this._config.mongo.password}` : '';
+        const auth = (this._config.mongo.user || password) ? this._config.mongo.user + password + '@' : '';
+        const uri = `mongodb://${auth}${this._config.mongo.host}/${this._config.mongo.database}`;
 
         // Prevent mongoose Promise deprecation message
-        (<any>mongoose).Promise = global.Promise;
+        (mongoose as any).Promise = global.Promise;
 
         return new Promise((resolve, reject) => {
             if (mongoose.connection.readyState) {

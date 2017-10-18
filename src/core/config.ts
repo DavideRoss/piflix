@@ -1,52 +1,52 @@
 import * as _ from 'lodash';
-import { checkExist } from 'utils/promise-fs';
 import { resolve } from 'path';
+import { checkExist } from 'utils/promise-fs';
 
 import { injectable } from 'inversify';
 
-let defaultConf = {
-    log: {
-        timestamp: true,
-        level: 'debug',
-        http: true
-    },
-
-    mongo: {
-        host: 'localhost',
-        user: null,
-        password: null,
-        database: 'piflix'
-    },
-
-    http: {
-        port: 1337
-    },
-
-    token: {
-        expiration: 2000000
-    },
-
-    test: {
-        mongo: {
-            host: 'localhost',
-            user: null,
-            password: null,
-            database: 'piflix-test'
-        }
-    },
-
+const defaultConf = {
     debug: {
-        sendStackToClient: true,
-        sendErrorsToClient: true
+        sendErrorsToClient: true,
+        sendStackToClient: true
+    },
+
+    external: {
+        api: 'http://api.tvmaze.com',
+        provider: 'tvmaze'
     },
 
     files: {
         base: resolve(__dirname + '/../../../files')
     },
 
-    remote: {
-        provider: 'tvmaze',
-        api: 'http://api.tvmaze.com'
+    http: {
+        port: 1337
+    },
+
+    log: {
+        http: true,
+        level: 'debug',
+        timestamp: true,
+    },
+
+    mongo: {
+        database: 'piflix',
+        host: 'localhost',
+        password: null,
+        user: null
+    },
+
+    test: {
+        mongo: {
+            database: 'piflix-test',
+            host: 'localhost',
+            password: null,
+            user: null
+        }
+    },
+
+    token: {
+        expiration: 2000000
     }
 };
 
@@ -107,8 +107,8 @@ export class Configuration {
         });
     }
 
-    setConfiguration(conf: Object = {}) {
-        let c = _.merge(defaultConf, conf);
+    setConfiguration(conf: object = {}) {
+        const c = _.merge(defaultConf, conf);
         Object.assign(this, c);
     }
 }

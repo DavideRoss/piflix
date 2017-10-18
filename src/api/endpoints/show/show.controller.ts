@@ -1,37 +1,35 @@
 import { injectable } from 'inversify';
 
-import * as request from 'request-promise-native';
+import * as junk from 'junk';
 import * as _ from 'lodash';
-import * as sim from 'string-similarity';
+import * as moment from 'moment';
 import * as mongoose from 'mongoose';
 import * as path from 'path';
-import * as moment from 'moment';
+import * as request from 'request-promise-native';
+import * as sim from 'string-similarity';
 import * as striptags from 'striptags';
-import * as junk from 'junk';
 
 import { Configuration } from 'core/config';
-import { Db } from 'core/db';
-import { ImageProvider } from 'core/image';
 import { ApiError, ErrorCode } from 'core/error-codes';
+import { ImageProvider } from 'core/image';
 
 import * as fs from 'utils/promise-fs';
 
-import { RequestSessionHandler } from 'api/request-session-handler';
+import { IRequestSessionHandler } from 'api/request-session-handler';
 
-import { ApiShowInstance, ApiShowFactory } from 'models/external/show.model';
+import { ApiShowFactory } from 'models/external/show.model';
 
-import { IShow, IShowModel } from 'interfaces/show.interface';
-import { ISeason, ISeasonModel } from 'interfaces/season.interface';
 import { IEpisode, IEpisodeModel } from 'interfaces/episode.interface';
+import { ISeason, ISeasonModel } from 'interfaces/season.interface';
+import { IShow } from 'interfaces/show.interface';
 
-import { Show } from 'models/show.model';
-import { Season } from 'models/season.model';
 import { Episode } from 'models/episode.model';
+import { Season } from 'models/season.model';
+import { Show } from 'models/show.model';
 
 @injectable()
 export class ShowController {
     constructor(
-        private _db: Db,
         private _config: Configuration,
         private _apiShowFactory: ApiShowFactory,
         private _imageProvider: ImageProvider
@@ -39,39 +37,39 @@ export class ShowController {
         this.searchRemote = this.searchRemote.bind(this);
     }
 
-    async searchRemote(req: RequestSessionHandler, res) {
-        let obj = await request.get(this._config.external.api + '/singlesearch/shows?q=' + encodeURIComponent(req.query.q));
+    async searchRemote(req: IRequestSessionHandler, res) {
+        const obj = await request.get(this._config.external.api + '/singlesearch/shows?q=' + encodeURIComponent(req.query.q));
         res.send(this._apiShowFactory.parse(obj));
     }
 
-    async importFromRemote(req: RequestSessionHandler, res) {
-        let objStr = await request.get(this._config.external.api + '/shows/' + req.params.id + '?embed[]=episodes&embed[]=seasons');
-        let obj = JSON.parse(objStr);
+    async importFromRemote(req: IRequestSessionHandler, res) {
+        const objStr = await request.get(this._config.external.api + '/shows/' + req.params.id + '?embed[]=episodes&embed[]=seasons');
+        const obj = JSON.parse(objStr);
 
-        let newShow = new Show({
-            remoteId: obj.id,
+        const newShow = new Show({
+            alias: _.kebabCase(obj.name),
+            episodes: [],
             name: obj.name,
             officialSite: obj.officialSite,
-            alias: _.kebabCase(obj.name),
             premiere: moment(obj.premiered, 'YYYY-MM-DD').toDate(),
+            remoteId: obj.id,
             seasons: [],
-            episodes: []
         });
 
         newShow.image = await this._imageProvider.download(obj.image.original, newShow.alias);
 
-        let seasons = _.groupBy(obj._embedded.episodes, 'season');
+        const seasons = _.groupBy(obj._embedded.episodes, 'season');
 
-         await Promise.all(Object.keys(seasons).map(async k => {
-            let seasonObj = obj._embedded.seasons.find(e => e.number = k);
-            let newSeason = new Season({
-                remoteId: seasonObj.id,
+        await Promise.all(Object.keys(seasons).map(async k => {
+            const seasonObj = obj._embedded.seasons.find(e => e.number = k);
+            const newSeason = new Season({
+                alias: _.kebabCase('Season ' + seasonObj.number),
+                end: moment(seasonObj.endDate, 'YYYY-MM-DD').toDate(),
+                episodes: [],
                 name: seasonObj.name,
                 number: seasonObj.number,
                 premiere: moment(seasonObj.premiereDate, 'YYYY-MM-DD').toDate(),
-                end: moment(seasonObj.endDate, 'YYYY-MM-DD').toDate(),
-                episodes: [],
-                alias: _.kebabCase('Season ' + seasonObj.number),
+                remoteId: seasonObj.id,
 
                 show: newShow._id
             });
@@ -81,20 +79,19 @@ export class ShowController {
                 path.join(newShow.alias, newSeason.alias)
             );
 
-            let list = seasons[k];
+            const list = seasons[k];
 
             await Promise.all(list.map(async (e: any) => {
-                let newEpisode = new Episode({
-                    remoteId: e.id,
+                const newEpisode = new Episode({
+                    alias: _.kebabCase(e.name),
+                    date: moment(e.airstamp),
                     name: e.name,
                     number: e.number,
-                    date: moment(e.airstamp),
+                    remoteId: e.id,
                     runTime: e.runtime,
-                    summary: striptags(e.summary),
-                    alias: _.kebabCase(e.name),
-
+                    season: newSeason._id,
                     show: newShow._id,
-                    season: newSeason._id
+                    summary: (striptags as any)(e.summary)
                 });
 
                 newEpisode.image = await this._imageProvider.download(
@@ -121,47 +118,47 @@ export class ShowController {
     }
 
     async detectShow(req, res) {
-        let show = await Show.findById(new mongoose.Types.ObjectId(req.params.id));
+        const show = await Show.findById(new mongoose.Types.ObjectId(req.params.id));
 
         if (!show) {
             throw new ApiError(ErrorCode.missing_show);
         }
 
-        let dirs = (await fs.readdir(this._config.files.base)).filter(junk.not);
-        let match = sim.findBestMatch(show.name, dirs);
+        const dirs = (await fs.readdir(this._config.files.base)).filter(junk.not);
+        const match = sim.findBestMatch(show.name, dirs);
 
         res.send({
-            suggested: match.bestMatch.target,
-            folders: dirs
+            folders: dirs,
+            suggested: match.bestMatch.target
         });
     }
 
     async detectSeasons(req, res) {
-        let show = await Show.findById(new mongoose.Types.ObjectId(req.params.show)).populate('seasons');
-        let dirs = await fs.readdir(this._config.files.base + '/' + req.body.folder);
+        const show = await Show.findById(new mongoose.Types.ObjectId(req.params.show)).populate('seasons');
+        const dirs = await fs.readdir(this._config.files.base + '/' + req.body.folder);
 
-        let out = [];
+        const out = [];
 
         if (!show) {
             throw new ApiError(ErrorCode.missing_show);
         }
 
         show.seasons.forEach(season => {
-            let seasonRegex = new RegExp(`s(eason)? ?0?${season.number}`, 'i');
+            const seasonRegex = new RegExp(`s(eason)? ?0?${season.number}`, 'i');
 
-            let found = dirs.find(e => seasonRegex.test(e));
+            const found = dirs.find(e => seasonRegex.test(e));
             dirs.splice(dirs.indexOf(found), 1);
 
             out.push({
+                folder: found,
                 id: (season as ISeasonModel)._id.toString(),
-                number: season.number,
-                folder: found
+                number: season.number
             });
         });
 
         res.send({
-            matches: out,
-            folders: dirs
+            folders: dirs,
+            matches: out
         });
 
         // Save show folder on database
@@ -170,8 +167,8 @@ export class ShowController {
     }
 
     async detectFiles(req, res) {
-        let show = await Show.findById(new mongoose.Types.ObjectId(req.params.show));
-        let season = await Season.findById(new mongoose.Types.ObjectId(req.params.season)).populate('episodes');
+        const show = await Show.findById(new mongoose.Types.ObjectId(req.params.show));
+        const season = await Season.findById(new mongoose.Types.ObjectId(req.params.season)).populate('episodes');
 
         if (!show) {
             throw new ApiError(ErrorCode.missing_show);
@@ -181,25 +178,25 @@ export class ShowController {
             throw new ApiError(ErrorCode.missing_season);
         }
 
-        let files = await fs.readdir(this._config.files.base + '/' + show.folder + '/' + req.body.folder);
-        let out = [];
+        const files = await fs.readdir(this._config.files.base + '/' + show.folder + '/' + req.body.folder);
+        const out = [];
 
         season.episodes.forEach(episode => {
-            let epRegex = new RegExp(`(s|e)?0?${season.number}(x|e)0?${episode.number}`, 'i');
+            const epRegex = new RegExp(`(s|e)?0?${season.number}(x|e)0?${episode.number}`, 'i');
 
-            let found = files.find(e => epRegex.test(e));
+            const found = files.find(e => epRegex.test(e));
             files.splice(files.indexOf(found), 1);
 
             out.push({
+                file: found,
                 id: (episode as IEpisodeModel)._id.toString(),
-                number: episode.number,
-                file: found
+                number: episode.number
             });
         });
 
         res.send({
-            matches: out,
-            files: files
+            files,
+            matches: out
         });
 
         // Save season folder on database
@@ -208,14 +205,14 @@ export class ShowController {
     }
 
     async matchEpisodes(req, res) {
-        let season = await Season.findById(new mongoose.Types.ObjectId(req.params.season)).populate('episodes');
+        const season = await Season.findById(new mongoose.Types.ObjectId(req.params.season)).populate('episodes');
 
         if (!season) {
             throw new ApiError(ErrorCode.missing_season);
         }
 
         req.body.matches.forEach(async match => {
-            let ep = season.episodes.find(e => (e as IEpisodeModel)._id.toString() === match.episode) as IEpisodeModel;
+            const ep = season.episodes.find(e => (e as IEpisodeModel)._id.toString() === match.episode) as IEpisodeModel;
 
             if (!ep) {
                 throw new ApiError(ErrorCode.missing_episode);
@@ -231,11 +228,11 @@ export class ShowController {
     }
 
     async rebuildPaths(req, res) {
-        let show = await Show.findById(new mongoose.Types.ObjectId(req.params.show)).populate({
+        const show = await Show.findById(new mongoose.Types.ObjectId(req.params.show)).populate({
             path: 'seasons',
             populate: {
-                path: 'episodes',
-                model: 'Episode'
+                model: 'Episode',
+                path: 'episodes'
             }
         });
 
@@ -243,8 +240,8 @@ export class ShowController {
             throw new ApiError(ErrorCode.missing_show);
         }
 
-        let out = [];
-        let templatePath = req.body.template.split(path.sep);
+        const out = [];
+        const templatePath = req.body.template.split(path.sep);
 
         if (templatePath.length !== 3) {
             throw new ApiError(ErrorCode.wrong_path_template);
@@ -256,7 +253,7 @@ export class ShowController {
             await Promise.all(season.episodes.map(async episode => {
                 if (!episode.file) return;
 
-                let oldPath = path.join(
+                const oldPath = path.join(
                     this._config.files.base,
                     show.folder,
                     season.folder,
@@ -270,18 +267,18 @@ export class ShowController {
                     newPath + path.extname(oldPath)
                 );
 
-                let dirs = newPath.split(path.sep).slice(-3, -1);
+                const dirs = newPath.split(path.sep).slice(-3, -1);
                 await fs.mkdirp(path.join.apply(null, [this._config.files.base, ...dirs]));
                 await fs.rename(oldPath, newPath);
 
                 out.push({
-                    old: oldPath,
-                    new: newPath.split(path.sep).slice(-templatePath.length)
+                    new: newPath.split(path.sep).slice(-templatePath.length),
+                    old: oldPath
                 });
             }));
         }));
 
-        let newShowFolder = this.parseTemplate(templatePath[0], show);
+        const newShowFolder = this.parseTemplate(templatePath[0], show);
 
         if (newShowFolder !== show.folder) {
             await fs.rimraf(path.join(this._config.files.base, show.folder));
@@ -290,7 +287,7 @@ export class ShowController {
         } else {
             await Promise.all(show.seasons.map(async (season) => {
                 if (!season.folder) return;
-                let newSeasonFolder = this.parseTemplate(templatePath[1], show, season);
+                const newSeasonFolder = this.parseTemplate(templatePath[1], show, season);
 
                 if (newSeasonFolder !== season.folder) {
                     await fs.rimraf(path.join(this._config.files.base, show.folder, season.folder));

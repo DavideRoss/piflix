@@ -77,8 +77,8 @@ export class Api {
     }
 
     async listen(): Promise<any> {
-        return new Promise((resolve, reject) => {
-            this._server = this._app.listen(this._config.http.port, server => {
+        return new Promise((resolve) => {
+            this._server = this._app.listen(this._config.http.port, () => {
                 this._logger.log.info('Server listening on port ' + this._config.http.port);
                 resolve();
             });
@@ -86,7 +86,7 @@ export class Api {
     }
 
     async close(): Promise<any> {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             this._server.close(() => {
                 this._logger.log.debug('Server connection closed!');
                 resolve();

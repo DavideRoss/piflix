@@ -1,7 +1,5 @@
-import { ZERO_LENGTH_ERROR } from 'tslint/lib/verify/lines';
 import { injectable } from 'inversify';
 
-import * as http from 'http';
 import * as isReachable from 'is-reachable';
 
 import { Configuration } from 'core/config';

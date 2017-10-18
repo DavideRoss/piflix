@@ -1,15 +1,13 @@
-import { UserValidator } from './user.validator';
-import { injectable } from 'inversify';
 import { Router } from 'express';
+import { injectable } from 'inversify';
 
-import { Policy } from 'core/policy';
+import { UserValidator } from './user.validator';
 
 import { UserController } from 'api/endpoints/user/user.controller';
 
 @injectable()
 export class UserRoute {
     constructor(
-        private _policy: Policy,
         private _userValidator: UserValidator,
         private _userController: UserController
     ) { }
@@ -35,18 +33,18 @@ export class UserRoute {
          * @apiSuccess (200) {string} mail E-mail address
          *
          * @apiParamExample  {json} Request-Example:
-           {
-               "mail": "davide@crispybacon.it",
-               "password": "test1234"
-           }
+         * {
+         *     "mail": "davide@crispybacon.it",
+         *     "password": "test1234"
+         * }
          *
          *
          * @apiSuccessExample {json} Success-Response:
-           {
-               "token": "gPjyD1d9t2Nz1k6m",
-               "id": "59ba42d38af57e33455f31c2"
-               "mail": "davide@crispybacon.it"
-           }
+         * {
+         *     "token": "gPjyD1d9t2Nz1k6m",
+         *     "id": "59ba42d38af57e33455f31c2"
+         *     "mail": "davide@crispybacon.it"
+         * }
          *
          *
          */
@@ -62,11 +60,10 @@ export class UserRoute {
          * @apiDescription Perform user logout and invalidate the user token
          *
          * @apiSuccessExample {json} Success-Response:
-           HTTP/1.1 200 OK
+         * HTTP/1.1 200 OK
          *
          *
          */
         router.post('/user/logout', this._userController.logout);
     }
 }
-

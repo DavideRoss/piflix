@@ -7,11 +7,11 @@ import * as utilTest from 'utils/test';
 
 import expect = require('expect.js');
 
-let glob: utilTest.TestGlobals;
+let glob: utilTest.ITestGlobals;
 
 describe('User', () => {
     before(async () => {
-        let t = await utilTest.init_e2e();
+        const t = await utilTest.init_e2e();
         glob = t;
     });
 
@@ -56,7 +56,7 @@ describe('User', () => {
         });
 
         it('should login as an activated user', async () => {
-            let res = await Request(glob.url)
+            const res = await Request(glob.url)
                 .post('user/login')
                 .send({
                     mail: '2@crispybacontest.it',

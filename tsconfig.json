@@ -1,15 +1,19 @@
 {
+    "buildOnSave": false,
     "compileOnSave": false,
     "compilerOptions": {
-        "target": "es6",
-        "module": "commonjs",
-        "sourceMap": true,
-        "typeRoots": ["./typings/modules", "./typings/globals"],
-        "types": ["reflect-metadata"],
-        "moduleResolution": "node",
-        "experimentalDecorators": true,
+        "alwaysStrict": true,
+        "baseUrl": "./src",
         "emitDecoratorMetadata": true,
-        "baseUrl": "./src"
+        "experimentalDecorators": true,
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "noUnusedLocals": true,
+        "noUnusedParameters": false,
+        "sourceMap": true,
+        "target": "es6",
+        "typeRoots": ["./typings/modules", "./typings/globals"],
+        "types": ["reflect-metadata"]
     },
     "include":[
         "src/**/*"

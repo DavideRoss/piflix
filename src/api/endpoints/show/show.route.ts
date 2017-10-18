@@ -1,5 +1,5 @@
-import { injectable } from 'inversify';
 import { Router } from 'express';
+import { injectable } from 'inversify';
 
 import { Policy, Roles } from 'core/policy';
 

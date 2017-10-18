@@ -16,7 +16,7 @@ export enum ErrorCode {
     wrong_path_template
 }
 
-export interface ErrorCodeObject {
+export interface IErrorCodeObject {
     code?: number;
     label: ErrorCode;
     message?: string;
@@ -24,13 +24,13 @@ export interface ErrorCodeObject {
 }
 
 export class ApiError extends Error {
-    errorCodeObject: ErrorCodeObject;
+    errorCodeObject: IErrorCodeObject;
 
     constructor(code: ErrorCode) {
         if (!errorsMap.has(code)) {
             super('Invalid error code thrown');
         } else {
-            let errorCodeObject = errorsMap.get(code);
+            const errorCodeObject = errorsMap.get(code);
             super(errorCodeObject.message);
             this.errorCodeObject = errorCodeObject;
         }
@@ -41,13 +41,13 @@ export class ApiError extends Error {
     }
 }
 
-let errorsMap: Map<ErrorCode, ErrorCodeObject> = new Map<ErrorCode, ErrorCodeObject>();
+const errorsMap: Map<ErrorCode, IErrorCodeObject> = new Map<ErrorCode, IErrorCodeObject>();
 
 // ADDITIONALS
 
 // 1999: field validation errors
 
-let errors: ErrorCodeObject[] = [{
+const errors: IErrorCodeObject[] = [{
     code: 1003,
     label: ErrorCode.user_not_found,
     message: 'User not found',
@@ -89,6 +89,6 @@ let errors: ErrorCodeObject[] = [{
     status: 400
 }];
 
-for (let error of errors) {
+for (const error of errors) {
     errorsMap.set(error.label, error);
 }

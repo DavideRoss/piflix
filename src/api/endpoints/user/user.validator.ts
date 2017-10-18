@@ -10,7 +10,7 @@ export class UserValidator {
             password: Joi.string().required()
         });
 
-        let results = Joi.validate(req.body, schema, {
+        const results = Joi.validate(req.body, schema, {
             abortEarly: false
         });
 

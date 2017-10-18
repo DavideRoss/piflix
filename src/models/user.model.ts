@@ -17,28 +17,30 @@ export class UserSchema extends mongoose.Schema implements IUser {
 
     constructor() {
         super({
+            activated: {
+                default: false,
+                type: Boolean
+            },
+
             mail: {
-                type: String,
-                required: true
+                required: true,
+                type: String
             },
 
             password: {
-                type: String,
-                required: true
-            },
-
-            token: String,
-            activated: {
-                type: Boolean,
-                default: false
+                required: true,
+                type: String
             },
 
             role: {
-                type: Number,
-                required: true
-            }
+                required: true,
+                type: Number
+            },
+
+            token: String
         });
     }
 }
 
+// tslint:disable-next-line:variable-name
 export const User = mongoose.model<IUserModel>('User', new UserSchema());

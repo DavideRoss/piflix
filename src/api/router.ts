@@ -1,10 +1,7 @@
 import { injectable } from 'inversify';
 
-import { Db } from 'core/db';
-import { Logger } from 'core/log';
-
-import { UserRoute } from 'api/endpoints/user/user.route';
 import { ShowRoute } from 'api/endpoints/show/show.route';
+import { UserRoute } from 'api/endpoints/user/user.route';
 
 import * as express from 'express';
 

@@ -1,7 +1,7 @@
 import { injectable } from 'inversify';
 
-import * as passport from 'passport';
 import * as express from 'express';
+import * as passport from 'passport';
 
 import { UserRole } from 'models/user.model';
 

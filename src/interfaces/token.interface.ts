@@ -1,5 +1,5 @@
-import { Document } from 'mongoose';
 import { IUser } from 'interfaces/user.interface';
+import { Document } from 'mongoose';
 
 export enum TokenLevel {
     authenticate = 0,

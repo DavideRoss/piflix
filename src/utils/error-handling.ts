@@ -1,7 +1,7 @@
 import { Logger } from 'core/log';
 
 export function handleRejections(err, log: Logger) {
-    let errors = [err];
+    const errors = [err];
     if (err.stack) errors.push(err.stack);
 
     printErrors(errors, log);
