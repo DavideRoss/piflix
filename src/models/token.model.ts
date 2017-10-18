@@ -11,27 +11,29 @@ export class TokenSchema extends mongoose.Schema implements IToken {
 
     constructor() {
         super({
-            user: {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: 'User'
-            },
-
-            value: {
-                type: String,
-                required: true
-            },
 
             expireAt: {
-                type: Date,
-                required: true
+                required: true,
+                type: Date
             },
 
             level: {
-                type: Number,
-                required: true
+                required: true,
+                type: Number
+            },
+
+            user: {
+                ref: 'User',
+                type: mongoose.Schema.Types.ObjectId
+            },
+
+            value: {
+                required: true,
+                type: String
             }
         });
     }
 }
 
+// tslint:disable-next-line:variable-name
 export const Token = mongoose.model<ITokenModel>('Token', new TokenSchema());

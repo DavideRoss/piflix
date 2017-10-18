@@ -1,6 +1,6 @@
 import { injectable } from 'inversify';
 
-export interface ApiShowInstance {
+export interface IApiShow {
     id: number;
     url: string;
     name: string;
@@ -10,19 +10,19 @@ export interface ApiShowInstance {
 
 @injectable()
 export class ApiShowFactory {
-    parse(str: string): ApiShowInstance {
+    parse(str: string): IApiShow {
         try {
-            let obj = JSON.parse(str);
+            const obj = JSON.parse(str);
 
-            let out = {
+            const out = {
                 id: obj.id,
-                url: obj.url,
+                image: obj.image.original,
                 name: obj.name,
                 officialSite: obj.officialSite,
-                image: obj.image.original
+                url: obj.url
             };
 
-            return out as ApiShowInstance;
+            return out as IApiShow;
         } catch (ex) {
             throw ex;
         }

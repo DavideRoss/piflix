@@ -1,46 +1,52 @@
 import * as _ from 'lodash';
 import { resolve } from 'path';
+import { checkExist } from 'utils/promise-fs';
 
 import { injectable } from 'inversify';
 
-let defaultConf = {
-    log: {
-        timestamp: true,
-        level: 'debug',
-        http: true
+const defaultConf = {
+    debug: {
+        sendErrorsToClient: true,
+        sendStackToClient: true
     },
 
-    mongo: {
-        host: 'localhost',
-        user: null,
-        password: null,
-        database: 'piflix'
+    external: {
+        api: 'http://api.tvmaze.com',
+        provider: 'tvmaze'
+    },
+
+    files: {
+        base: resolve(__dirname + '/../../../files')
     },
 
     http: {
         port: 1337
     },
 
-    token: {
-        expiration: 2000000
+    log: {
+        http: true,
+        level: 'debug',
+        timestamp: true,
+    },
+
+    mongo: {
+        database: 'piflix',
+        host: 'localhost',
+        password: null,
+        user: null
     },
 
     test: {
         mongo: {
+            database: 'piflix-test',
             host: 'localhost',
-            user: null,
             password: null,
-            database: 'piflix-test'
+            user: null
         }
     },
 
-    debug: {
-        sendStackToClient: true,
-        sendErrorsToClient: true
-    },
-
-    files: {
-        base: resolve(__dirname + '/../../../files')
+    token: {
+        expiration: 2000000
     }
 };
 
@@ -82,17 +88,27 @@ export class Configuration {
     };
 
     files: {
-        base: string
+        base: string;
+    };
+
+    external: {
+        provider: string;
+        api: string
     };
 
     constructor() {
         this.setConfiguration();
 
         // TODO: load configuration from env/cmd line arguments
+
+        // Check files.base folder existence
+        checkExist(this.files.base).catch(() => {
+            throw Error('Missing local file folder');
+        });
     }
 
-    setConfiguration(conf: Object = {}) {
-        let c = _.merge(defaultConf, conf);
+    setConfiguration(conf: object = {}) {
+        const c = _.merge(defaultConf, conf);
         Object.assign(this, c);
     }
 }

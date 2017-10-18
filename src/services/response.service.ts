@@ -1,10 +1,10 @@
 import { injectable } from 'inversify';
 
 import { Configuration } from 'core/config';
-import { Logger } from 'core/log';
 import { ApiError } from 'core/error-codes';
+import { Logger } from 'core/log';
 
-export interface ErrorResponseBody {
+export interface IErrorResponseBody {
     message: any;
     stack?: any;
     code?: number;
@@ -19,27 +19,27 @@ export class ResponseService {
 
     errorMiddleware(err, req, res, next) {
         let status: number = 500;
-        let responseBody: ErrorResponseBody;
+        let responseBody: IErrorResponseBody;
 
         if (err instanceof ApiError) {
             responseBody = {
-                message: err.errorCodeObject.message,
                 code: err.errorCodeObject.code,
+                message: err.errorCodeObject.message,
                 stack: err.stack
             };
 
             status = err.errorCodeObject.status;
         } else if (err.name === 'ValidationError') {
             responseBody = {
+                code: 1999,
                 message: {
                     errors: err.details.map(e => {
                         return {
-                            type: e.type,
-                            label: e.context.label
+                            label: e.context.label,
+                            type: e.type
                         };
                     })
-                },
-                code: 1999
+                }
             };
 
             status = 400;
@@ -73,14 +73,14 @@ export class ResponseService {
         this.serverError(responseBody, req, res, next);
     }
 
-    serverError(err: ErrorResponseBody, req, res, next) {
+    serverError(err: IErrorResponseBody, req, res, next) {
         if (!this._config.debug.sendErrorsToClient) {
             return res.status(500).send();
         }
 
         res.status(500).send({
-            message: err.message,
             code: err.code,
+            message: err.message,
             stack: this._config.debug.sendStackToClient ? err.stack : undefined
         });
 
@@ -90,24 +90,24 @@ export class ResponseService {
 
     badRequest(err, req, res, next) {
         res.status(400).send({
-            message: err.message,
             code: err.code,
+            message: err.message,
             stack: this._config.debug.sendStackToClient ? err.stack : undefined
         });
     }
 
     forbidden(err, req, res, next) {
         res.status(403).send({
-            message: err.message,
             code: err.code,
+            message: err.message,
             stack: this._config.debug.sendStackToClient ? err.stack : undefined
         });
     }
 
     unauthorized(err, req, res, next) {
         res.status(401).send({
-            message: err.message,
             code: err.code,
+            message: err.message,
             stack: this._config.debug.sendStackToClient ? err.stack : undefined
         });
     }

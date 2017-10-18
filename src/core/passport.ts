@@ -1,28 +1,26 @@
 import { injectable } from 'inversify';
 
-import { Strategy as LocalStrategy } from 'passport-local';
 import { Strategy as BearerStrategy } from 'passport-http-bearer';
+import { Strategy as LocalStrategy } from 'passport-local';
 
 import { Configuration } from 'core/config';
-import { Db } from 'core/db';
 import { ApiError, ErrorCode } from 'core/error-codes';
 
 import { AuthService } from 'services/auth.service';
 
-import { IUser } from 'interfaces/user.interface';
 import { TokenLevel } from 'interfaces/token.interface';
+import { IUser } from 'interfaces/user.interface';
 
-import { User } from 'models/user.model';
 import { Token } from 'models/token.model';
+import { User } from 'models/user.model';
 
-import * as passport from 'passport';
 import * as bcrypt from 'bcrypt';
+import * as passport from 'passport';
 
 @injectable()
 export class PassportConfiguration {
     constructor(
         private _config: Configuration,
-        private _db: Db,
         private _authService: AuthService
     ) { }
 
@@ -32,23 +30,19 @@ export class PassportConfiguration {
         });
 
         passport.deserializeUser((id, done) => {
-            User.findOne({
-                id: id
-            }).exec(done);
+            User.findOne({ id }).exec(done);
         });
 
         passport.use(new LocalStrategy({
-            usernameField: 'mail',
-            passwordField: 'password'
+            passwordField: 'password',
+            usernameField: 'mail'
         }, async (mail, password, done) => {
             if (!mail || !password) {
                 return done(null, false);
             }
 
             try {
-                let user = await User.findOne({
-                    mail: mail
-                });
+                const user = await User.findOne({ mail });
 
                 if (!user) {
                     throw new ApiError(ErrorCode.user_not_found);
@@ -58,12 +52,8 @@ export class PassportConfiguration {
                     throw new ApiError(ErrorCode.user_invalid_password);
                 }
 
-                if (!user.activated) {
-                    throw new ApiError(ErrorCode.user_not_activated);
-                }
-
-                let expiration = this._config.token.expiration;
-                let token = await this._authService.createToken(user, expiration, TokenLevel.activation);
+                const expiration = this._config.token.expiration;
+                const token = await this._authService.createToken(user, expiration, TokenLevel.authenticate);
 
                 user.token = token.value;
                 return done(null, user);
@@ -73,19 +63,19 @@ export class PassportConfiguration {
         }));
 
         passport.use(new BearerStrategy(async (accessToken, done) => {
-            let token = await Token.findOne({
-                value: accessToken,
+            const token = await Token.findOne({
                 expireAt: {
                     $gt: new Date()
                 },
-                level: TokenLevel.authenticate
+                level: TokenLevel.authenticate,
+                value: accessToken
             }).populate('user');
 
             if (!token || !token.user) {
                 return done(null, false);
             }
 
-            let user = <IUser>token.user;
+            const user = token.user as IUser;
             user.token = token.value;
 
             done(null, user);

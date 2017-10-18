@@ -1,8 +1,8 @@
 import * as mongoose from 'mongoose';
 
-import { IShow } from 'interfaces/show.interface';
-import { ISeason, ISeasonModel } from 'interfaces/season.interface';
 import { IEpisode } from 'interfaces/episode.interface';
+import { ISeason, ISeasonModel } from 'interfaces/season.interface';
+import { IShow } from 'interfaces/show.interface';
 
 export class SeasonSchema extends mongoose.Schema implements ISeason {
     remoteId: number;
@@ -21,27 +21,28 @@ export class SeasonSchema extends mongoose.Schema implements ISeason {
 
     constructor() {
         super({
-            remoteId: Number,
-            name: String,
-            number: Number,
-            image: String,
-
-            premiere: Date,
+            alias: String,
             end: Date,
 
+            episodes: [{
+                ref: 'Episode',
+                type: mongoose.Schema.Types.ObjectId
+            }],
+
             folder: String,
-            alias: String,
+            image: String,
+            name: String,
+            number: Number,
+            premiere: Date,
+            remoteId: Number,
 
             show: {
+                ref: 'Show',
                 type: mongoose.Schema.Types.ObjectId,
-                ref: 'Show'
-            },
-
-            episodes: [{
-                type: mongoose.Schema.Types.ObjectId,
-                ref: 'Episode'
-            }]
+            }
         });
     }
 }
+
+// tslint:disable-next-line:variable-name
 export const Season = mongoose.model<ISeasonModel>('Season', new SeasonSchema());

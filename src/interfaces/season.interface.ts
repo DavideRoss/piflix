@@ -1,7 +1,7 @@
 import { Document } from 'mongoose';
 
-import { IShow } from 'interfaces/show.interface';
 import { IEpisode } from 'interfaces/episode.interface';
+import { IShow } from 'interfaces/show.interface';
 
 export interface ISeason {
     remoteId: number;

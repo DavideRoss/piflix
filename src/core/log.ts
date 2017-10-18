@@ -1,15 +1,15 @@
-import { injectable } from 'inversify';
 import { Configuration } from 'core/config';
+import { injectable } from 'inversify';
 
+import * as dateFormat from 'dateformat';
 import * as express from 'express';
+import * as expressWinston from 'express-winston';
 import * as winston from 'winston';
 import * as winstonCommon from 'winston/lib/winston/common';
-import * as expressWinston from 'express-winston';
-import * as dateFormat from 'dateformat';
 
-interface LogConfiguration {
-    level: string;
-}
+// interface ILogConfiguration {
+//     level: string;
+// }
 
 @injectable()
 export class Logger {
@@ -28,13 +28,13 @@ export class Logger {
 
         if (process.env.PC_SILENT !== 'true') {
             this.transports.push(new winston.transports.Console({
-                json: false,
                 colorize: true,
-                useTimestamp: this._config.log.level,
+                json: false,
                 stderrLevels: ['error'],
                 timestamp: (this._config.log.timestamp) ? () => {
-                    return (<any>winston).config.colorize('data', dateFormat(new Date(), 'isoDateTime'));
-                } : false
+                    return (winston as any).config.colorize('data', dateFormat(new Date(), 'isoDateTime'));
+                } : false,
+                useTimestamp: this._config.log.level
             }));
         }
 
@@ -65,10 +65,10 @@ export class Logger {
     setupApp(app: express.Application) {
         if (this._config.log.http) {
             app.use(expressWinston.logger({
-                winstonInstance: this.log,
+                colorize: true,
                 meta: false,
                 msg: '{{req.method}} {{req.url}} {{res.responseTime}}ms {{res.statusCode}}',
-                colorize: true
+                winstonInstance: this.log
             }));
         }
     }

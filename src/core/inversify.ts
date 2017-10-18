@@ -8,23 +8,25 @@ import { PassportConfiguration } from 'core/passport';
 import { Policy } from 'core/policy';
 
 import { AuthService } from 'services/auth.service';
+import { ExternalService } from 'services/external.service';
 import { ResponseService } from 'services/response.service';
 
 import { ApiShowFactory } from 'models/external/show.model';
 
-import { UserRoute } from 'api/endpoints/user/user.route';
 import { ShowRoute } from 'api/endpoints/show/show.route';
+import { UserRoute } from 'api/endpoints/user/user.route';
 
-import { UserController } from 'api/endpoints/user/user.controller';
 import { ShowController } from 'api/endpoints/show/show.controller';
+import { UserController } from 'api/endpoints/user/user.controller';
 
-import { UserValidator } from 'api/endpoints/user/user.validator';
 import { ShowValidator } from 'api/endpoints/show/show.validator';
+import { UserValidator } from 'api/endpoints/user/user.validator';
 
 import { Api } from 'api/api';
 import { RouterFactory } from 'api/router';
 
-export let InversifyContainer = new Container();
+// tslint:disable-next-line:variable-name
+export const InversifyContainer = new Container();
 
 InversifyContainer.bind<Configuration>(Configuration).toSelf().inSingletonScope();
 InversifyContainer.bind<Db>(Db).toSelf().inSingletonScope();
@@ -36,6 +38,7 @@ InversifyContainer.bind<Policy>(Policy).toSelf();
 
 InversifyContainer.bind<AuthService>(AuthService).toSelf();
 InversifyContainer.bind<ResponseService>(ResponseService).toSelf();
+InversifyContainer.bind<ExternalService>(ExternalService).toSelf();
 
 InversifyContainer.bind<ApiShowFactory>(ApiShowFactory).toSelf();
 

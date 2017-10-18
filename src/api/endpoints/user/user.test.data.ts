@@ -1,25 +1,26 @@
-import { hashPassword } from 'utils/crypt';
 import * as mongodb from 'mongodb';
+import { hashPassword } from 'utils/crypt';
 
 import { TokenLevel } from 'interfaces/token.interface';
 
-let ObjectId = mongodb.ObjectID;
+// tslint:disable-next-line:variable-name
+const ObjectId = mongodb.ObjectID;
 
-let expireDate = new Date();
+const expireDate = new Date();
 expireDate.setTime(expireDate.getTime() + 1000000000);
 
-let testData: any = {};
+const testData: any = {};
 
 testData.User = {
     u1: {
-        _id: new ObjectId,
+        _id: new ObjectId(),
         activated: false,
         mail: '1@crispybacontest.it',
         password: hashPassword('1')
     },
 
     u2: {
-        _id: new ObjectId,
+        _id: new ObjectId(),
         activated: true,
         mail: '2@crispybacontest.it',
         password: hashPassword('2')
@@ -29,9 +30,9 @@ testData.User = {
 testData.Token = {
     t1n: {
         _id: new ObjectId(),
-        value: '1n',
         expireAt: expireDate,
-        level: TokenLevel.authenticate
+        level: TokenLevel.authenticate,
+        value: '1n',
     }
 };
 

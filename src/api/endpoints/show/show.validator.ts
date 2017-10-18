@@ -9,7 +9,7 @@ export class ShowValidator {
             q: Joi.string().required()
         });
 
-        let results = Joi.validate(req.query, schema, {
+        const results = Joi.validate(req.query, schema, {
             abortEarly: false
         });
 
@@ -25,7 +25,7 @@ export class ShowValidator {
             id: Joi.number().positive().required()
         });
 
-        let results = Joi.validate(req.params, schema, {
+        const results = Joi.validate(req.params, schema, {
             abortEarly: true
         });
 
@@ -36,12 +36,12 @@ export class ShowValidator {
         }
     }
 
-    detectFolder(req, res, next) {
+    detectShow(req, res, next) {
         const schema = Joi.object().keys({
             id: Joi.string().required() // TODO: Validate for ObjectID
         });
 
-        let results = Joi.validate(req.params, schema, {
+        const results = Joi.validate(req.params, schema, {
             abortEarly: true
         });
 
@@ -57,7 +57,7 @@ export class ShowValidator {
             show: Joi.string().required(), // TODO: Validate for ObjectID
         });
 
-        let paramsResult = Joi.validate(req.params, paramsSchema, {
+        const paramsResult = Joi.validate(req.params, paramsSchema, {
             abortEarly: true
         });
 
@@ -65,7 +65,7 @@ export class ShowValidator {
             folder: Joi.string().required()
         });
 
-        let bodyResult = Joi.validate(req.body, bodySchema, {
+        const bodyResult = Joi.validate(req.body, bodySchema, {
             abortEarly: true
         });
 
@@ -79,11 +79,11 @@ export class ShowValidator {
 
     detectFiles(req, res, next) {
         const paramsSchema = Joi.object().keys({
-            show: Joi.string().required(), // TODO: Validate for ObjectID
-            season: Joi.string().required() // TODO: Validate for ObjectID
+            season: Joi.string().required(), // TODO: Validate for ObjectID
+            show: Joi.string().required() // TODO: Validate for ObjectID
         });
 
-        let paramsResult = Joi.validate(req.params, paramsSchema, {
+        const paramsResult = Joi.validate(req.params, paramsSchema, {
             abortEarly: true
         });
 
@@ -91,7 +91,7 @@ export class ShowValidator {
             folder: Joi.string().required()
         });
 
-        let bodyResult = Joi.validate(req.body, bodySchema, {
+        const bodyResult = Joi.validate(req.body, bodySchema, {
             abortEarly: true
         });
 
