@@ -7,6 +7,7 @@ import * as uuid from 'uuid/v4';
 
 @injectable()
 export class ImageProvider {
+    // TODO: resize image based on type
     public download(url, path): Promise<string> {
         return new Promise((resolve, reject) => {
             const name = uuid() + extname(url);

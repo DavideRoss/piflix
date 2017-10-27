@@ -37,12 +37,146 @@ export class ShowController {
         this.searchRemote = this.searchRemote.bind(this);
     }
 
+    async getShows(req, res) {
+        const shows = await Show.find();
+        res.send(shows.map(e => {
+            return {
+                alias: e.alias,
+                episodes: e.episodes.length,
+                id: e._id.toString(),
+                image: `${req.protocol}://${req.get('host')}/files/images/${e.alias}/${e.image}`,
+                name: e.name
+            };
+        }));
+    }
+
+    async getShowDetails(req, res) {
+        const showQuery = Show.findOne({
+            alias: req.params.alias
+        });
+
+        // TODO: refactor
+        if (req.query.populate && req.query.populate.indexOf('season') > -1) {
+            const popObj = {
+                options: {
+                    sort: {
+                        number: 1
+                    }
+                },
+                path: 'seasons',
+                populate: null
+            };
+
+            if (req.query.populate.indexOf('season-episode') > -1) {
+                popObj.populate = {
+                    model: 'Episode',
+                    options: {
+                        sort: {
+                            number: 1
+                        }
+                    },
+                    path: 'episodes'
+                };
+            }
+
+            showQuery.populate(popObj);
+        }
+
+        // TODO: add season number of episode
+        showQuery.populate({
+            options: {
+                sort: {
+                    number: 1
+                }
+            },
+            path: 'episodes',
+            populate: {
+                model: 'Season',
+                path: 'season'
+            }
+        });
+
+        // TODO: add progression for user/show
+
+        const show = await showQuery.exec();
+
+        if (!show) {
+            // TODO: throw actual error
+            return res.status(404).send({
+                error: 'missing_show'
+            });
+        }
+
+        const firstEp = show.episodes[0];
+        const imgBasePath = `${req.protocol}://${req.get('host')}/files/images`;
+
+        const obj = {
+            alias: show.alias,
+            background_image: firstEp.image ? `${imgBasePath}/${show.alias}/season-${firstEp.season.number}/${firstEp.alias}/${firstEp.image}` : null,
+            episodes: null,
+            id: show._id.toString(),
+            image: `${imgBasePath}/${show.alias}/${show.image}`,
+            name: show.name,
+            official_site: show.officialSite,
+            remote_id: show.remoteId,
+            seasons: null,
+        };
+
+        if (req.query.populate && req.query.populate.indexOf('season') > -1) {
+            obj.seasons = show.seasons.map(e => {
+                const seasonObj = {
+                    alias: e.alias,
+                    episodes: null,
+                    id: (e as any)._id.toString(), // TODO: add _id in interface
+                    name: e.name,
+                    number: e.number,
+                };
+
+                if (req.query.populate.indexOf('season-episode') > -1) {
+                    seasonObj.episodes = e.episodes.map(k => {
+                        return {
+                            alias: k.alias,
+                            id: (e as any)._id.toString(), // TODO: add _id in interface
+                            name: k.name,
+                            number: k.number,
+                            summary: k.summary
+                        };
+                    });
+                } else {
+                    seasonObj.episodes = e.episodes.length;
+                }
+
+                return seasonObj;
+            });
+        } else {
+            obj.seasons = show.seasons.length;
+        }
+
+        if (req.query.populate && req.query.populate.indexOf('episode') > -1) {
+            obj.episodes = show.episodes.map(e => {
+                return {
+                    alias: e.alias,
+                    id: (e as any)._id.toString(), // TODO: add _id in interface
+                    name: e.name,
+                    number: e.number,
+                    summary: e.summary
+                };
+            });
+        } else {
+            obj.episodes = show.episodes.length;
+        }
+
+        res.send(obj);
+    }
+
     async searchRemote(req: IRequestSessionHandler, res) {
+        // TODO: handle 404 response
         const obj = await request.get(this._config.external.api + '/singlesearch/shows?q=' + encodeURIComponent(req.query.q));
         res.send(this._apiShowFactory.parse(obj));
     }
 
     async importFromRemote(req: IRequestSessionHandler, res) {
+        // TODO: handle 404 response
         const objStr = await request.get(this._config.external.api + '/shows/' + req.params.id + '?embed[]=episodes&embed[]=seasons');
         const obj = JSON.parse(objStr);
 
@@ -56,6 +190,7 @@ export class ShowController {
             seasons: [],
         });
 
+        // TODO: check image existence
         newShow.image = await this._imageProvider.download(obj.image.original, newShow.alias);
 
         const seasons = _.groupBy(obj._embedded.episodes, 'season');
@@ -74,17 +209,21 @@ export class ShowController {
                 show: newShow._id
             });
 
-            newSeason.image = await this._imageProvider.download(
-                seasonObj.image.original,
-                path.join(newShow.alias, newSeason.alias)
-            );
+            if (seasonObj.image) {
+                newSeason.image = await this._imageProvider.download(
+                    seasonObj.image.original,
+                    path.join(newShow.alias, newSeason.alias)
+                );
+            } else {
+                newSeason.image = null;
+            }
 
             const list = seasons[k];
 
             await Promise.all(list.map(async (e: any) => {
                 const newEpisode = new Episode({
                     alias: _.kebabCase(e.name),
-                    date: moment(e.airstamp),
+                    date: e.airstamp ? moment(e.airstamp).toDate() : null,
                     name: e.name,
                     number: e.number,
                     remoteId: e.id,
@@ -94,10 +233,14 @@ export class ShowController {
                     summary: (striptags as any)(e.summary)
                 });
 
-                newEpisode.image = await this._imageProvider.download(
-                    e.image.original,
-                    path.join(newShow.alias, newSeason.alias, newEpisode.alias)
-                );
+                if (e.image) {
+                    newEpisode.image = await this._imageProvider.download(
+                        e.image.original,
+                        path.join(newShow.alias, newSeason.alias, newEpisode.alias)
+                    );
+                } else {
+                    newEpisode.image = null;
+                }
 
                 newSeason.episodes.push(newEpisode._id);
                 newShow.episodes.push(newEpisode._id);
