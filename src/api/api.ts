@@ -69,6 +69,10 @@ export class Api {
         // Setup logging middleware
         this._logger.setupApp(this._app);
 
+        // Setup static file folder
+        // TODO: move to external server file + environment
+        this._app.use('/files', express.static(this._config.files.base));
+
         // Setup controllers routes
         this._app.use(this._route.router);
 

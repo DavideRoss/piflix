@@ -62,5 +62,16 @@ export class ShowRoute {
             this._showValidator.rebuildPaths,
             this._showController.rebuildPaths.bind(this._showController)
         );
+
+        router.get('/show',
+            this._policy.is(Roles.authenticated),
+            this._showController.getShows.bind(this._showController)
+        );
+
+        router.get('/show/alias/:alias',
+            this._policy.is(Roles.authenticated),
+            // TODO: add querystring + params validator
+            this._showController.getShowDetails.bind(this._showController)
+        );
     }
 }
